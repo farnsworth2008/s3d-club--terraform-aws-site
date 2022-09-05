@@ -126,8 +126,9 @@ resource "aws_cloudfront_distribution" "this" {
 resource "aws_s3_object" "object" {
   count = local.index_html_source == null ? 0 : 1
 
-  bucket = local.web_bucket
-  etag   = filemd5(local.index_html_source)
-  key    = "index.html"
-  source = local.index_html_source
+  bucket       = local.web_bucket
+  content_type = "text/html"
+  etag         = filemd5(local.index_html_source)
+  key          = "index.html"
+  source       = local.index_html_source
 }

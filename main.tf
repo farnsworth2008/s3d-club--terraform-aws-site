@@ -47,7 +47,7 @@ resource "aws_s3_bucket_policy" "this" {
       Action    = "s3:GetObject"
       Effect    = "Allow"
       Principal = "*"
-      Resource  = "arn:aws:s3:::${local.web_bucket}/*"
+      Resource  = join("", "arn:aws:s3:::", local.web_bucket, "/*")
       Sid       = "PublicReadGetObject"
     }]
   })

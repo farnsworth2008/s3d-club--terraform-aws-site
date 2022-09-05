@@ -1,5 +1,9 @@
 data "aws_caller_identity" "this" {}
 
+data "aws_route53_zone" "this" {
+  name = var.domain
+}
+
 locals {
   account_id        = data.aws_caller_identity.this.account_id
   domain            = var.domain
@@ -27,10 +31,6 @@ resource "aws_route53_record" "this" {
   ttl     = 300
   type    = "CNAME"
   zone_id = aws_route53_zone.this.zone_id
-}
-
-resource "aws_route53_zone" "this" {
-  name = local.domain
 }
 
 resource "aws_s3_bucket" "logs" {

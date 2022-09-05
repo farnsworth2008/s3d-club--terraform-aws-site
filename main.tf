@@ -3,11 +3,12 @@ data "aws_caller_identity" "this" {}
 locals {
   account_id        = data.aws_caller_identity.this.account_id
   domain            = var.domain
+  favicon_source    = var.disable_favicon ? null : coalesce(var.favicon_source, "${path.module}/Favicon.ico.png")
+  index_html_source = var.disable_index_html ? null : coalesce(var.index_html_source, "${path.module}/index.html")
   log_bucket        = "${local.account_id}-log"
   s3_origin_id      = "main"
   web_bucket        = "web-${local.account_id}"
-  favicon_source    = var.disable_favicon ? null : coalesce(var.favicon_source, "${path.module}/Favicon.ico.png")
-  index_html_source = var.disable_index_html ? null : coalesce(var.index_html_source, "${path.module}/index.html")
+  website           = "https://${var.site_name}.${local.domain}"
 }
 
 module "acm" {

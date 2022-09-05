@@ -6,6 +6,7 @@ locals {
   log_bucket        = "${local.account_id}-log"
   s3_origin_id      = "main"
   web_bucket        = "web-${local.account_id}"
+  favicon_source    = var.disable_favicon ? null : coalesce(var.favicon_source, "${path.module}/Favicon.ico.png")
   index_html_source = var.disable_index_html ? null : coalesce(var.index_html_source, "${path.module}/index.html")
 }
 
@@ -123,11 +124,22 @@ resource "aws_cloudfront_distribution" "this" {
   }
 }
 
+resource "aws_s3_object" "favicon" {
+  count = local.favicon_source == null ? 0 : 1
+
+  bucket       = local.web_bucket
+  content_type = "image/png"
+  etag         = filemd5(local.favicon_source)
+  key          = "favicon.ico"
+  source       = local.favicon_source
+}
+
 resource "aws_s3_object" "object" {
   count = local.index_html_source == null ? 0 : 1
 
-  bucket = local.web_bucket
-  etag   = filemd5(local.index_html_source)
-  key    = "index.html"
-  source = local.index_html_source
+  bucket       = local.web_bucket
+  content_type = "text/html"
+  etag         = filemd5(local.index_html_source)
+  key          = "index.html"
+  source       = local.index_html_source
 }

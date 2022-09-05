@@ -1,4 +1,4 @@
 output "website" {
-  descripiton = "URL for the website"
+  description = "URL for the website"
   value       = local.website
 }

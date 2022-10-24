@@ -10,3 +10,6 @@ Recently completed and planned work is tracked here.
 - Updated `aws` provider
 - Updated `time` provider
 - Updated modules
+
+## [0.1.10-1000](.)
+- Added `terraform.tf`

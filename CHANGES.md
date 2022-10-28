@@ -12,3 +12,6 @@ Recently completed and planned work is tracked here.
 - Updated `acm` module
 - Updated `name` module
 - Updated `waf` module
+
+## [0.1.15-1000](.)
+- Fixed `aws_route53_zone` data lookup

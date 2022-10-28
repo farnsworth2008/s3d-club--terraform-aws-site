@@ -26,7 +26,7 @@ locals {
 
 module "acm" {
   count  = var.acm_arn == null ? 1 : 0
-  source = "github.com/s3d-club/terraform-aws-acm?ref=0.1.13-s3d-1002"
+  source = "github.com/s3d-club/terraform-aws-acm?ref=0.1.13-s3d-1003"
 
   domain                    = local.www_domain
   tags                      = local.tags
@@ -35,7 +35,7 @@ module "acm" {
 }
 
 module "name" {
-  source = "github.com/s3d-club/terraform-external-name?ref=0.1.10-s3d-1002"
+  source = "github.com/s3d-club/terraform-external-name?ref=0.1.10-s3d-1003"
 
   context = join(".", [var.name, var.domain])
   path    = path.module

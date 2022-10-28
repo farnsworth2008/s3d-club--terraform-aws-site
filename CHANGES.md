@@ -8,3 +8,6 @@ Recently completed and planned work is tracked here.
 - Updated `acm` module
 - Updated `aws` provider
 - Updated `waf` module
+
+## [0.1.13-1000](.)
+- Added `s3d-flow-json` in `changes` module

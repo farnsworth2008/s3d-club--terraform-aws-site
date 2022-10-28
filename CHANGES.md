@@ -9,5 +9,5 @@ Recently completed and planned work is tracked here.
 - Updated `aws` provider
 - Updated `waf` module
 
-## [0.1.13-s3d-1018](.)
+## [0.1.13-s3d-1019](.)
 - Added `s3d-flow-json` in `changes` module

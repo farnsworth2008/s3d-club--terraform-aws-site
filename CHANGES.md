@@ -13,5 +13,5 @@ Recently completed and planned work is tracked here.
 - Updated `name` module
 - Updated `waf` module
 
-## [0.1.15-1000](.)
+## [0.1.15-s3d-1001](.)
 - Fixed `aws_route53_zone` data lookup

@@ -23,7 +23,7 @@ locals {
 
 module "acm" {
   count  = var.acm_arn == null ? 1 : 0
-  source = "github.com/s3d-club/terraform-aws-acm?ref=0.1.18-s3d-1004"
+  source = "github.com/s3d-club/terraform-aws-acm?ref=v0.1.18"
 
   domain                    = local.www_domain
   tags                      = local.tags

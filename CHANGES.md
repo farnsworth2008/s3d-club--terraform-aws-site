@@ -15,3 +15,6 @@ Recently completed and planned work is tracked here.
 
 ## [0.1.15](.)
 - Fixed `aws_route53_zone` data lookup
+
+## [0.1.16-1000](.)
+- Changed to use `-*` as suffix for pre-release versions

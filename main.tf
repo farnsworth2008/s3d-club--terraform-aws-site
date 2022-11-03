@@ -23,7 +23,7 @@ locals {
 
 module "acm" {
   count  = var.acm_arn == null ? 1 : 0
-  source = "github.com/s3d-club/terraform-aws-acm?ref=v0.1.18"
+  source = "github.com/s3d-club/terraform-aws-acm?ref=v0.1.19"
 
   domain                    = local.www_domain
   tags                      = local.tags
@@ -31,7 +31,7 @@ module "acm" {
 }
 
 module "name" {
-  source = "github.com/s3d-club/terraform-external-name?ref=v0.1.15"
+  source = "github.com/s3d-club/terraform-external-name?ref=v0.1.16"
 
   context = join(".", [var.name, var.domain])
   path    = path.module
@@ -40,7 +40,7 @@ module "name" {
 
 module "waf" {
   count  = var.enable_waf ? 1 : 0
-  source = "github.com/s3d-club/terraform-aws-waf?ref=v0.1.12"
+  source = "github.com/s3d-club/terraform-aws-waf?ref=v0.1.13"
 
   ip_blacklist = var.ip_blacklist
   ip_whitelist = var.ip_whitelist
@@ -48,99 +48,6 @@ module "waf" {
   name_prefix  = join("-", ["1", local.www_bucket])
   redirects    = var.waf_redirects
   tags         = local.tags
-}
-
-resource "aws_route53_record" "www" {
-  name    = var.name
-  records = [aws_cloudfront_distribution.this.domain_name]
-  ttl     = 300
-  type    = "CNAME"
-  zone_id = local.zone_id
-}
-
-# We do not log or version the log content; (that would be silly!)
-#   tfsec:ignore:aws-s3-enable-bucket-encryption
-#   tfsec:ignore:aws-s3-enable-bucket-logging
-#   tfsec:ignore:aws-s3-enable-versioning
-#   tfsec:ignore:aws-s3-encryption-customer-key
-resource "aws_s3_bucket" "logs" {
-  bucket        = local.log_bucket
-  force_destroy = true
-  tags          = local.tags
-}
-
-resource "aws_s3_bucket_public_access_block" "logs" {
-  block_public_acls       = true
-  block_public_policy     = true
-  bucket                  = aws_s3_bucket.logs.id
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# We do not log or version the www content
-#   tfsec:ignore:aws-s3-enable-bucket-encryption
-#   tfsec:ignore:aws-s3-enable-bucket-logging
-#   tfsec:ignore:aws-s3-enable-versioning
-#   tfsec:ignore:aws-s3-encryption-customer-key
-resource "aws_s3_bucket" "www" {
-  depends_on = [aws_s3_bucket.logs]
-
-  tags          = local.tags
-  bucket        = local.www_bucket
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_policy" "www" {
-  bucket = aws_s3_bucket.www.id
-
-  policy = jsonencode({
-    Id      = "PolicyForCloudFrontPrivateContent"
-    Version = "2008-10-17"
-
-    Statement = [{
-      Action    = "s3:GetObject"
-      Effect    = "Allow"
-      Principal = { Service = "cloudfront.amazonaws.com" }
-      Resource  = "arn:aws:s3:::${local.www_bucket}/*",
-      Sid       = "AllowCloudFrontServicePrincipal"
-
-      Condition = {
-        StringEquals = {
-          "AWS:SourceArn" = aws_cloudfront_distribution.this.arn
-        }
-      }
-    }]
-  })
-}
-
-# It is fine if the bucket is public because it is web content
-# tfsec:ignore:aws-s3-block-public-acls
-# tfsec:ignore:aws-s3-block-public-policy
-# tfsec:ignore:aws-s3-ignore-public-acls
-# tfsec:ignore:aws-s3-no-public-buckets
-resource "aws_s3_bucket_public_access_block" "www" {
-  block_public_acls       = true
-  block_public_policy     = true
-  bucket                  = aws_s3_bucket.www.id
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_website_configuration" "this" {
-  bucket = local.www_bucket
-
-  index_document {
-    suffix = "index.html"
-  }
-}
-
-resource "aws_s3_bucket_acl" "logs" {
-  acl    = "private"
-  bucket = aws_s3_bucket.logs.id
-}
-
-resource "aws_cloudfront_origin_access_identity" "this" {
-  comment = "Managed TF Module"
 }
 
 resource "aws_cloudfront_distribution" "this" {
@@ -217,10 +124,97 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
-resource "time_sleep" "for_s3_async_creation" {
-  depends_on = [aws_s3_bucket.www]
+resource "aws_cloudfront_origin_access_identity" "this" {
+  comment = "Managed TF Module"
+}
 
-  create_duration = "30s"
+resource "aws_route53_record" "www" {
+  name    = var.name
+  records = [aws_cloudfront_distribution.this.domain_name]
+  ttl     = 300
+  type    = "CNAME"
+  zone_id = local.zone_id
+}
+
+# We do not log or version the log content; (that would be silly!)
+#   tfsec:ignore:aws-s3-enable-bucket-encryption
+#   tfsec:ignore:aws-s3-enable-bucket-logging
+#   tfsec:ignore:aws-s3-enable-versioning
+#   tfsec:ignore:aws-s3-encryption-customer-key
+resource "aws_s3_bucket" "logs" {
+  bucket        = local.log_bucket
+  force_destroy = true
+  tags          = local.tags
+}
+
+# We do not log or version the www content
+#   tfsec:ignore:aws-s3-enable-bucket-encryption
+#   tfsec:ignore:aws-s3-enable-bucket-logging
+#   tfsec:ignore:aws-s3-enable-versioning
+#   tfsec:ignore:aws-s3-encryption-customer-key
+resource "aws_s3_bucket" "www" {
+  depends_on = [aws_s3_bucket.logs]
+
+  tags          = local.tags
+  bucket        = local.www_bucket
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_acl" "logs" {
+  acl    = "private"
+  bucket = aws_s3_bucket.logs.id
+}
+
+resource "aws_s3_bucket_policy" "www" {
+  bucket = aws_s3_bucket.www.id
+
+  policy = jsonencode({
+    Id      = "PolicyForCloudFrontPrivateContent"
+    Version = "2008-10-17"
+
+    Statement = [{
+      Action    = "s3:GetObject"
+      Effect    = "Allow"
+      Principal = { Service = "cloudfront.amazonaws.com" }
+      Resource  = "arn:aws:s3:::${local.www_bucket}/*",
+      Sid       = "AllowCloudFrontServicePrincipal"
+
+      Condition = {
+        StringEquals = {
+          "AWS:SourceArn" = aws_cloudfront_distribution.this.arn
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_s3_bucket_public_access_block" "logs" {
+  block_public_acls       = true
+  block_public_policy     = true
+  bucket                  = aws_s3_bucket.logs.id
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# It is fine if the bucket is public because it is web content
+# tfsec:ignore:aws-s3-block-public-acls
+# tfsec:ignore:aws-s3-block-public-policy
+# tfsec:ignore:aws-s3-ignore-public-acls
+# tfsec:ignore:aws-s3-no-public-buckets
+resource "aws_s3_bucket_public_access_block" "www" {
+  block_public_acls       = true
+  block_public_policy     = true
+  bucket                  = aws_s3_bucket.www.id
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_website_configuration" "this" {
+  bucket = local.www_bucket
+
+  index_document {
+    suffix = "index.html"
+  }
 }
 
 resource "aws_s3_object" "favicon" {
@@ -232,4 +226,10 @@ resource "aws_s3_object" "favicon" {
   etag         = filemd5(local.favicon)
   key          = "favicon.ico"
   source       = local.favicon
+}
+
+resource "time_sleep" "for_s3_async_creation" {
+  depends_on = [aws_s3_bucket.www]
+
+  create_duration = "30s"
 }

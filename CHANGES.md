@@ -26,3 +26,7 @@ This file describes the project history as it relates to tagged versions.
 - Updated `name` module
 - Updated `time` provider
 - Updated `waf` module
+
+## [0.1.20-1000](.)
+- Added `single_page_application` variable
+- Added `www_bucket` variable

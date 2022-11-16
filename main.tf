@@ -12,7 +12,7 @@ locals {
   website         = "https://${local.www_domain}"
   www_domain      = "${var.name}.${var.domain}"
   zone_id         = data.aws_route53_zone.this.id
-  www_bucket      = substr(local.name_prefix, 0, 60)
+  www_bucket      = coalesce(var.www_bucket, substr(local.name_prefix, 0, 60))
   default_favicon = "${path.module}/favicon.ico.png"
 
   # See description of the "fav_icon" variable.
@@ -61,18 +61,26 @@ resource "aws_cloudfront_distribution" "this" {
   price_class         = var.cloudfront_price_class
   tags                = local.tags
 
-  custom_error_response {
-    error_caching_min_ttl = 1
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
+  dynamic "custom_error_response" {
+    for_each = var.single_page_application ? [1] : []
+
+    content {
+      error_caching_min_ttl = 1
+      error_code            = 403
+      response_code         = 200
+      response_page_path    = "/index.html"
+    }
   }
 
-  custom_error_response {
-    error_caching_min_ttl = 1
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
+  dynamic "custom_error_response" {
+    for_each = var.single_page_application ? [1] : []
+
+    content {
+      error_caching_min_ttl = 1
+      error_code            = 404
+      response_code         = 200
+      response_page_path    = "/index.html"
+    }
   }
 
   origin {
@@ -86,7 +94,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["DELETE", "GET", "HEAD", "LISTBUCKET", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     default_ttl            = 0
     max_ttl                = 60 * 60 * 24

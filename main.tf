@@ -12,7 +12,7 @@ locals {
   website         = "https://${local.www_domain}"
   www_domain      = "${var.name}.${var.domain}"
   zone_id         = data.aws_route53_zone.this.id
-  www_bucket      = substr(local.name_prefix, 0, 60)
+  www_bucket      = coalesce(var.www_bucket, substr(local.name_prefix, 0, 60))
   default_favicon = "${path.module}/favicon.ico.png"
 
   # See description of the "fav_icon" variable.
@@ -61,18 +61,26 @@ resource "aws_cloudfront_distribution" "this" {
   price_class         = var.cloudfront_price_class
   tags                = local.tags
 
-  custom_error_response {
-    error_caching_min_ttl = 1
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
+  dynamic "custom_error_response" {
+    for_each = var.single_page_application ? [1] : []
+
+    content {
+      error_caching_min_ttl = 1
+      error_code            = 403
+      response_code         = 200
+      response_page_path    = "/index.html"
+    }
   }
 
-  custom_error_response {
-    error_caching_min_ttl = 1
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
+  dynamic "custom_error_response" {
+    for_each = var.single_page_application ? [1] : []
+
+    content {
+      error_caching_min_ttl = 1
+      error_code            = 404
+      response_code         = 200
+      response_page_path    = "/index.html"
+    }
   }
 
   origin {
@@ -172,19 +180,34 @@ resource "aws_s3_bucket_policy" "www" {
     Id      = "PolicyForCloudFrontPrivateContent"
     Version = "2008-10-17"
 
-    Statement = [{
-      Action    = "s3:GetObject"
-      Effect    = "Allow"
-      Principal = { Service = "cloudfront.amazonaws.com" }
-      Resource  = "arn:aws:s3:::${local.www_bucket}/*",
-      Sid       = "AllowCloudFrontServicePrincipal"
+    Statement = [
+      {
+        Action    = ["s3:GetObject"]
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Resource  = "arn:aws:s3:::${local.www_bucket}/*",
+        Sid       = "AllowCloudFrontServicePrincipal"
 
-      Condition = {
-        StringEquals = {
-          "AWS:SourceArn" = aws_cloudfront_distribution.this.arn
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.this.arn
+          }
         }
-      }
-    }]
+      },
+      {
+        Action    = ["s3:ListBucket"]
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Resource  = "arn:aws:s3:::${local.www_bucket}",
+        Sid       = "AllowCloudFrontServicePrincipal"
+
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.this.arn
+          }
+        }
+      },
+    ]
   })
 }
 

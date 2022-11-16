@@ -16,6 +16,15 @@ variable "cloudfront_price_class" {
     EOT
 }
 
+variable "default_root_object" {
+  default = "index.html"
+  type    = string
+
+  description = <<-EOT
+    The Cloudfront Default Root Object.
+    EOT
+}
+
 variable "domain" {
   type = string
 
@@ -86,6 +95,15 @@ variable "name" {
     EOT
 }
 
+variable "single_page_application" {
+  default = true
+  type    = bool
+
+  description = <<-EOT
+    True if this is a single page application site
+    EOT
+}
+
 variable "subject_alternative_names" {
   default = []
   type    = list(string)
@@ -103,6 +121,16 @@ variable "tags" {
     EOT
 }
 
+variable "use_s3_website_endpoint" {
+  default = false
+  type    = bool
+
+  description = <<-EOT
+    Option to use the S3 Website Endpoint
+    EOT
+}
+
+
 variable "waf_arn" {
   default = null
   type    = string
@@ -118,5 +146,14 @@ variable "waf_redirects" {
 
   description = <<-EOT
     A list of redirects for the WAF.
+    EOT
+}
+
+variable "www_bucket" {
+  default = null
+  type    = string
+
+  description = <<-EOT
+    The WWW Bucket name or null to use a random name.
     EOT
 }

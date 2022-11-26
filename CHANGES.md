@@ -19,3 +19,8 @@ This file describes the project history as it relates to tagged versions.
 
 ## [0.1.26](.) to [0.1.29](.)
 - Updated `aws` provider
+
+## [1.0.0-1000](.)
+- Added `s3_bucket` output
+- Added `website` output
+- Removed `urls` output

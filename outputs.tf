@@ -6,14 +6,11 @@ output "domain" {
     END
 }
 
-output "urls" {
-  value = {
-    s3_bucket = "s3://${local.www_bucket}"
-    url       = local.website
-  }
+output "s3_bucket" {
+  value = local.www_bucket
 
   description = <<-END
-    The URLs for the website.
+    The site's S3 bucket.
     END
 }
 
@@ -22,5 +19,13 @@ output "waf_arn" {
 
   description = <<-END
     The WAF ARN.
+    END
+}
+
+output "website" {
+  value = local.website
+
+  description = <<-END
+    The URL for the website.
     END
 }
